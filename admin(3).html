@@ -1,0 +1,456 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Murfi Editor</title>
+<style>
+  * { box-sizing: border-box; }
+  body { margin: 0; font-family: Arial, Helvetica, sans-serif; color: #2b2b2b; background: #f4f5f7; line-height: 1.5; }
+  header { background: #1f4e8c; color: #fff; padding: 14px 20px; display: flex; justify-content: space-between; align-items: center; }
+  header h1 { margin: 0; font-size: 1.2rem; }
+  main { max-width: 960px; margin: 0 auto; padding: 20px; }
+  .panel { background: #fff; border: 1px solid #e2e2e2; padding: 20px; margin-bottom: 20px; }
+  h2 { margin: 0 0 14px; font-size: 1.05rem; }
+  label { display: block; font-size: 0.85rem; font-weight: bold; margin: 10px 0 4px; }
+  input, select, textarea { width: 100%; font: inherit; padding: 8px 10px; border: 1px solid #cfd3da; background: #fff; }
+  textarea { min-height: 80px; }
+  .row { display: grid; gap: 12px; grid-template-columns: 1fr; }
+  @media (min-width: 700px) { .row { grid-template-columns: 1fr 1fr; } }
+  .check { display: flex; align-items: center; gap: 8px; margin-top: 12px; font-weight: normal; }
+  .check input { width: auto; }
+  button { font: inherit; font-weight: bold; padding: 9px 16px; border: none; background: #1f4e8c; color: #fff; cursor: pointer; margin-top: 14px; margin-right: 8px; }
+  button.secondary { background: #6b6b6b; }
+  button.danger { background: #c62828; }
+  table { width: 100%; border-collapse: collapse; font-size: 0.9rem; }
+  th, td { text-align: left; padding: 8px; border-bottom: 1px solid #e2e2e2; vertical-align: top; }
+  td.actions button { margin: 0 6px 0 0; padding: 5px 10px; font-size: 0.8rem; margin-top: 0; }
+  .badge { display: inline-block; font-size: 0.75rem; padding: 2px 6px; background: #e2e2e2; }
+  .badge.lead { background: #1f4e8c; color: #fff; }
+  .msg { margin-top: 10px; font-size: 0.9rem; color: #1f4e8c; }
+  .err { color: #c62828; }
+  .hidden { display: none !important; }
+</style>
+</head>
+<body>
+<header>
+  <h1>Murfi Editor</h1>
+  <button class="secondary hidden" id="signOutBtn" style="margin:0">Sign out</button>
+</header>
+
+<main>
+  <!-- Sign in -->
+  <section class="panel" id="loginPanel">
+    <h2>Sign in</h2>
+    <form id="loginForm">
+      <label for="email">Email</label>
+      <input id="email" type="email" required autocomplete="email">
+      <div id="passwordArea" class="hidden">
+        <label for="password">Password</label>
+        <input id="password" type="password" autocomplete="current-password">
+      </div>
+      <div id="codeArea" class="hidden">
+        <label for="code">6-digit code from your email</label>
+        <input id="code" inputmode="numeric" autocomplete="one-time-code" maxlength="6">
+      </div>
+      <button type="submit" id="loginBtn">Send code</button>
+      <button type="button" class="secondary" id="modeBtn">Use password instead</button>
+      <div class="msg" id="loginMsg"></div>
+    </form>
+  </section>
+
+  <!-- Editor -->
+  <div id="editorArea" class="hidden">
+    <section class="panel">
+      <h2 id="formTitle">Add a story</h2>
+      <form id="storyForm">
+        <input type="hidden" id="storyId">
+        <label for="title">Headline</label>
+        <input id="title" required>
+        <label for="summary">Summary</label>
+        <textarea id="summary"></textarea>
+        <div class="row">
+          <div>
+            <label for="author">Author</label>
+            <input id="author">
+          </div>
+          <div>
+            <label for="category">Section</label>
+            <select id="category"></select>
+          </div>
+        </div>
+        <div class="row">
+          <div>
+            <label for="imageUrl">Image URL (optional)</label>
+            <input id="imageUrl" placeholder="https://...">
+          </div>
+          <div>
+            <label for="videoUrl">Video embed URL (optional)</label>
+            <input id="videoUrl" placeholder="https://www.youtube.com/embed/...">
+          </div>
+        </div>
+        <label class="check"><input type="checkbox" id="lead"> Make this the lead story (replaces the current lead)</label>
+        <label class="check"><input type="checkbox" id="published" checked> Published</label>
+        <button type="submit">Save story</button>
+        <button type="button" class="secondary" id="cancelEdit">Clear form</button>
+        <div class="msg" id="formMsg"></div>
+      </form>
+    </section>
+
+    <section class="panel">
+      <h2>New story submissions</h2>
+      <table>
+        <thead><tr><th>Headline</th><th>From</th><th>Section</th><th>Received</th><th></th></tr></thead>
+        <tbody id="submissionRows"></tbody>
+      </table>
+      <div class="msg" id="submissionMsg"></div>
+    </section>
+
+    <section class="panel">
+      <h2>Social media links</h2>
+      <p class="msg">Leave a link empty to hide that platform on the site.</p>
+      <form id="socialForm">
+        <div id="socialFields" class="row"></div>
+        <button type="submit">Save social links</button>
+        <div class="msg" id="socialMsg"></div>
+      </form>
+    </section>
+
+    <section class="panel">
+      <h2>All stories</h2>
+      <table>
+        <thead><tr><th>Headline</th><th>Section</th><th>Status</th><th></th></tr></thead>
+        <tbody id="storyRows"></tbody>
+      </table>
+    </section>
+  </div>
+</main>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.min.js"></script>
+<script>
+  // SETTINGS: same values as in murfi.html
+  const SUPABASE_URL = "https://jamhzcdythympkxgcrht.supabase.co";
+  const SUPABASE_ANON_KEY = "sb_publishable_Ua1s43xuqoIgCQAKO_kf7w_4LJa2Es9";
+
+  const sections = {
+    news: "News", politics: "Politics", business: "Business", international: "International",
+    sports: "Sports", entertainment: "Entertainment", opinion: "Opinion", health: "Health",
+    education: "Education", agriculture: "Agriculture", technology: "Technology", science: "Science",
+    culture: "Culture", podcast: "Podcast", videos: "Videos"
+  };
+
+  const db = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+
+  const $ = id => document.getElementById(id);
+
+  Object.entries(sections).forEach(([key, label]) => {
+    const opt = document.createElement("option");
+    opt.value = key;
+    opt.textContent = label;
+    $("category").appendChild(opt);
+  });
+
+  function setMsg(text, isError) {
+    const el = $("formMsg");
+    el.textContent = text;
+    el.classList.toggle("err", !!isError);
+  }
+
+  function resetForm() {
+    $("storyForm").reset();
+    $("storyId").value = "";
+    $("published").checked = true;
+    $("formTitle").textContent = "Add a story";
+    setMsg("");
+  }
+
+  async function showEditor(session) {
+    $("loginPanel").classList.toggle("hidden", !!session);
+    $("editorArea").classList.toggle("hidden", !session);
+    $("signOutBtn").classList.toggle("hidden", !session);
+    if (session) {
+      await loadRows();
+      await loadSocialFields();
+      await loadSubmissions();
+    }
+  }
+
+  async function loadRows() {
+    const { data, error } = await db
+      .from("stories")
+      .select("*")
+      .order("published_at", { ascending: false });
+    const tbody = $("storyRows");
+    tbody.innerHTML = "";
+    if (error) {
+      tbody.innerHTML = '<tr><td colspan="4" class="err">' + error.message + "</td></tr>";
+      return;
+    }
+    data.forEach(s => {
+      const tr = document.createElement("tr");
+      const badges = [
+        s.lead ? '<span class="badge lead">Lead</span>' : "",
+        s.published ? '<span class="badge">Published</span>' : '<span class="badge">Draft</span>'
+      ].join(" ");
+      tr.innerHTML = "<td></td><td></td><td>" + badges + "</td><td class='actions'></td>";
+      tr.children[0].textContent = s.title;
+      tr.children[1].textContent = sections[s.category] || s.category;
+
+      const edit = document.createElement("button");
+      edit.textContent = "Edit";
+      edit.onclick = () => fillForm(s);
+      const del = document.createElement("button");
+      del.textContent = "Delete";
+      del.className = "danger";
+      del.onclick = () => removeStory(s);
+      tr.children[3].append(edit, del);
+      tbody.appendChild(tr);
+    });
+  }
+
+  function fillForm(s) {
+    $("storyId").value = s.id;
+    $("title").value = s.title;
+    $("summary").value = s.summary || "";
+    $("author").value = s.author || "";
+    $("category").value = s.category;
+    $("imageUrl").value = s.image_url || "";
+    $("videoUrl").value = s.video_url || "";
+    $("lead").checked = !!s.lead;
+    $("published").checked = !!s.published;
+    $("formTitle").textContent = "Edit story";
+    setMsg("");
+    window.scrollTo({ top: 0, behavior: "smooth" });
+  }
+
+  async function removeStory(s) {
+    if (!confirm('Delete "' + s.title + '"? This cannot be undone.')) return;
+    const { error } = await db.from("stories").delete().eq("id", s.id);
+    if (error) alert(error.message);
+    else await loadRows();
+  }
+
+  $("storyForm").addEventListener("submit", async e => {
+    e.preventDefault();
+    const id = $("storyId").value;
+    const isLead = $("lead").checked;
+
+    const payload = {
+      title: $("title").value.trim(),
+      summary: $("summary").value.trim(),
+      author: $("author").value.trim(),
+      category: $("category").value,
+      image_url: $("imageUrl").value.trim() || null,
+      video_url: $("videoUrl").value.trim() || null,
+      lead: isLead,
+      published: $("published").checked
+    };
+
+    // Only one lead story at a time
+    if (isLead) {
+      let clear = db.from("stories").update({ lead: false }).eq("lead", true);
+      if (id) clear = clear.neq("id", id);
+      const { error: clearErr } = await clear;
+      if (clearErr) return setMsg(clearErr.message, true);
+    }
+
+    const result = id
+      ? await db.from("stories").update(payload).eq("id", id)
+      : await db.from("stories").insert(payload);
+
+    if (result.error) return setMsg(result.error.message, true);
+    // If this draft came from a submission, mark that submission as used
+    const usedId = pendingSubmissionId;
+    pendingSubmissionId = null;
+    if (usedId) await db.from("story_submissions").update({ status: "used" }).eq("id", usedId);
+
+    setMsg("Saved.");
+    resetForm();
+    await loadRows();
+    await loadSubmissions();
+  });
+
+  $("cancelEdit").addEventListener("click", resetForm);
+
+  // Story submissions from the public site
+  let pendingSubmissionId = null;
+
+  async function loadSubmissions() {
+    const { data, error } = await db
+      .from("story_submissions")
+      .select("*")
+      .eq("status", "new")
+      .order("created_at", { ascending: false });
+    const tbody = $("submissionRows");
+    tbody.innerHTML = "";
+    if (error) {
+      $("submissionMsg").textContent = error.message;
+      return;
+    }
+    if (!data.length) {
+      tbody.innerHTML = '<tr><td colspan="5">No new submissions.</td></tr>';
+      return;
+    }
+    data.forEach(s => {
+      const tr = document.createElement("tr");
+      tr.innerHTML = "<td></td><td></td><td></td><td></td><td class='actions'></td>";
+      tr.children[0].textContent = s.title;
+      tr.children[1].textContent = s.name || s.email || "Anonymous";
+      tr.children[2].textContent = sections[s.category] || s.category;
+      tr.children[3].textContent = new Date(s.created_at).toLocaleDateString();
+
+      const use = document.createElement("button");
+      use.textContent = "Use as draft";
+      use.onclick = () => useSubmission(s);
+      const dismiss = document.createElement("button");
+      dismiss.textContent = "Dismiss";
+      dismiss.className = "secondary";
+      dismiss.onclick = () => dismissSubmission(s);
+      tr.children[4].append(use, dismiss);
+      tbody.appendChild(tr);
+    });
+  }
+
+  function useSubmission(s) {
+    $("storyId").value = "";
+    $("title").value = s.title;
+    $("summary").value = s.details;
+    $("author").value = s.name || "";
+    $("category").value = s.category;
+    $("imageUrl").value = "";
+    $("videoUrl").value = "";
+    $("lead").checked = false;
+    $("published").checked = false;
+    $("formTitle").textContent = "Add a story (from a submission)";
+    pendingSubmissionId = s.id;
+    setMsg("Check the details and add an image if needed. It saves as a draft until you tick Published.");
+    window.scrollTo({ top: 0, behavior: "smooth" });
+  }
+
+  async function dismissSubmission(s) {
+    if (!confirm('Dismiss the submission "' + s.title + '"?')) return;
+    const { error } = await db.from("story_submissions").update({ status: "dismissed" }).eq("id", s.id);
+    if (error) $("submissionMsg").textContent = error.message;
+    else await loadSubmissions();
+  }
+
+  // Social media links
+  const socialPlatforms = ["X", "Facebook", "TikTok", "WhatsApp Channel", "Instagram", "Reddit"];
+
+  async function loadSocialFields() {
+    const { data, error } = await db.from("social_links").select("*");
+    const box = $("socialFields");
+    box.innerHTML = "";
+    if (error) {
+      $("socialMsg").textContent = error.message;
+      return;
+    }
+    socialPlatforms.forEach(name => {
+      const row = (data || []).find(r => r.platform === name) || { url: "" };
+      const wrap = document.createElement("div");
+      const label = document.createElement("label");
+      label.textContent = name;
+      const input = document.createElement("input");
+      input.placeholder = "https://...";
+      input.value = row.url || "";
+      input.dataset.platform = name;
+      wrap.append(label, input);
+      box.appendChild(wrap);
+    });
+  }
+
+  $("socialForm").addEventListener("submit", async e => {
+    e.preventDefault();
+    const rows = [...document.querySelectorAll("#socialFields input")].map(i => ({
+      platform: i.dataset.platform,
+      url: i.value.trim()
+    }));
+    const { error } = await db.from("social_links").upsert(rows);
+    $("socialMsg").textContent = error ? error.message : "Saved. Refresh Murfi to see the changes.";
+  });
+
+  // Two ways to sign in, switchable with the button:
+  // "code": Supabase emails a 6-digit code, which the editor types in.
+  // "password": the editor signs in with their email and password.
+  // shouldCreateUser: false means only accounts you create in Supabase can sign in.
+  let loginMode = "code";
+  let codeSent = false;
+  let pendingEmail = "";
+
+  function showLoginError(text) {
+    const msg = $("loginMsg");
+    msg.classList.add("err");
+    msg.textContent = text;
+  }
+
+  function resetLoginStep() {
+    codeSent = false;
+    $("email").readOnly = false;
+    $("codeArea").classList.add("hidden");
+    $("code").value = "";
+    $("passwordArea").classList.toggle("hidden", loginMode !== "password");
+    $("loginBtn").textContent = loginMode === "password" ? "Sign in" : "Send code";
+    $("modeBtn").textContent = loginMode === "password" ? "Use email code instead" : "Use password instead";
+    $("loginMsg").textContent = "";
+    $("loginMsg").classList.remove("err");
+  }
+
+  $("modeBtn").addEventListener("click", () => {
+    loginMode = loginMode === "code" ? "password" : "code";
+    resetLoginStep();
+  });
+
+  $("loginForm").addEventListener("submit", async e => {
+    e.preventDefault();
+    const msg = $("loginMsg");
+    msg.classList.remove("err");
+    msg.textContent = "";
+    const email = $("email").value.trim();
+
+    if (loginMode === "password") {
+      const { data, error } = await db.auth.signInWithPassword({
+        email,
+        password: $("password").value
+      });
+      if (error) return showLoginError(error.message);
+      return showEditor(data.session);
+    }
+
+    // Email code flow
+    if (!codeSent) {
+      const { error } = await db.auth.signInWithOtp({
+        email,
+        options: { shouldCreateUser: false }
+      });
+      if (error) return showLoginError(error.message);
+      pendingEmail = email;
+      codeSent = true;
+      $("codeArea").classList.remove("hidden");
+      $("email").readOnly = true;
+      $("loginBtn").textContent = "Sign in";
+      $("code").focus();
+      msg.textContent = "We sent a 6-digit code to " + email + ". It may take a minute.";
+      return;
+    }
+
+    const { data, error } = await db.auth.verifyOtp({
+      email: pendingEmail,
+      token: $("code").value.trim(),
+      type: "email"
+    });
+    if (error) return showLoginError(error.message);
+    showEditor(data.session);
+  });
+
+  $("signOutBtn").addEventListener("click", async () => {
+    await db.auth.signOut();
+    showEditor(null);
+  });
+
+  (async function init() {
+    const { data } = await db.auth.getSession();
+    showEditor(data.session);
+  })();
+</script>
+</body>
+</html>

@@ -1,0 +1,1064 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Murfi</title>
+<link rel="alternate" type="application/rss+xml" title="Murfi RSS Feed" href="https://jamhzcdythympkxgcrht.supabase.co/functions/v1/rss">
+<style>
+  :root {
+    --paper: #ffffff;
+    --ink: #2b2b2b;
+    --muted: #6b6b6b;
+    --rule: #e2e2e2;
+    --accent: #1f4e8c;
+    --card: #f7f8fa;
+    --breaking: #c62828;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) {
+      --paper: #1b1a17;
+      --ink: #ece8df;
+      --muted: #9e988b;
+      --rule: #3a372f;
+      --accent: #7fa8e0;
+      --card: #24221e;
+      --breaking: #ef5350;
+    }
+  }
+  :root[data-theme="dark"] {
+    --paper: #1b1a17;
+    --ink: #ece8df;
+    --muted: #9e988b;
+    --rule: #3a372f;
+    --accent: #7fa8e0;
+    --card: #24221e;
+    --breaking: #ef5350;
+  }
+  * { box-sizing: border-box; }
+  html { color-scheme: light; }
+  @media (prefers-color-scheme: dark) {
+    html:not([data-theme="light"]) { color-scheme: dark; }
+  }
+  body {
+    margin: 0;
+    background: var(--paper);
+    color: var(--ink);
+    font-family: Georgia, "Times New Roman", serif;
+    line-height: 1.6;
+  }
+  p { margin: 0 0 8px; }
+  a { color: var(--accent); }
+  .hidden { display: none !important; }
+  .sans { font-family: Arial, Helvetica, sans-serif; }
+
+  .ticker {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    background: var(--card);
+    border-bottom: 1px solid var(--rule);
+    padding: 6px 12px;
+    overflow: hidden;
+    font-family: Arial, Helvetica, sans-serif;
+    font-size: 0.85rem;
+  }
+  .breaking {
+    flex-shrink: 0;
+    background: var(--breaking);
+    color: #ffffff;
+    font-family: Arial, Helvetica, sans-serif;
+    font-size: 0.7rem;
+    font-weight: bold;
+    text-transform: uppercase;
+    letter-spacing: 0.1em;
+    padding: 4px 8px;
+    border-radius: 2px;
+  }
+  .ticker-window { overflow: hidden; flex: 1; white-space: nowrap; }
+  .ticker-track {
+    display: inline-block;
+    padding-left: 100%;
+    animation: scroll-ticker 60s linear infinite;
+  }
+  .ticker-track span { margin-right: 36px; }
+  .ticker-track span::after { content: "\2022"; margin-left: 36px; color: var(--muted); }
+  @keyframes scroll-ticker {
+    from { transform: translateX(0); }
+    to { transform: translateX(-100%); }
+  }
+  @media (prefers-reduced-motion: reduce) {
+    .ticker-track { animation: none; padding-left: 0; }
+  }
+
+  header {
+    text-align: center;
+    padding: 24px 16px 16px;
+    background: var(--accent);
+    color: #ffffff;
+    border-bottom: 3px double var(--ink);
+  }
+  .masthead {
+    font-size: clamp(2.2rem, 6vw, 3.8rem);
+    font-weight: bold;
+    letter-spacing: 0.02em;
+    margin: 0;
+  }
+  .dateline {
+    font-family: Arial, Helvetica, sans-serif;
+    font-size: 0.8rem;
+    color: rgba(255, 255, 255, 0.85);
+    text-transform: uppercase;
+    letter-spacing: 0.1em;
+    margin-top: 6px;
+  }
+  .tools {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: center;
+    align-items: center;
+    gap: 10px;
+    margin-top: 14px;
+    font-family: Arial, Helvetica, sans-serif;
+  }
+  .tools input {
+    font: inherit;
+    font-size: 0.9rem;
+    padding: 6px 10px;
+    border: 1px solid #ffffff;
+    border-radius: 2px;
+    width: min(260px, 70vw);
+    background: #ffffff;
+    color: var(--ink);
+  }
+  .tools a {
+    color: #ffffff;
+    font-size: 0.85rem;
+    text-decoration: none;
+    border: 1px solid #ffffff;
+    padding: 5px 10px;
+    border-radius: 2px;
+  }
+
+  nav.categories {
+    display: flex;
+    gap: 6px 18px;
+    padding: 10px 16px;
+    border-bottom: 1px solid var(--rule);
+    font-family: Arial, Helvetica, sans-serif;
+    font-size: 0.85rem;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    overflow-x: auto;
+    white-space: nowrap;
+    justify-content: flex-start;
+  }
+  @media (min-width: 900px) {
+    nav.categories { justify-content: center; flex-wrap: wrap; }
+  }
+  nav.categories button {
+    background: none;
+    border: none;
+    color: var(--ink);
+    font: inherit;
+    cursor: pointer;
+    padding: 4px 2px;
+    border-bottom: 2px solid transparent;
+  }
+  nav.categories button.active, nav.categories button:hover {
+    color: var(--accent);
+    border-bottom-color: var(--accent);
+  }
+
+  main {
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 24px 16px 48px;
+  }
+  .layout { display: grid; gap: 28px; }
+  @media (min-width: 900px) {
+    .layout { grid-template-columns: 1fr 300px; }
+  }
+  .lead {
+    display: grid;
+    gap: 16px;
+    padding-bottom: 24px;
+    border-bottom: 1px solid var(--rule);
+    margin-bottom: 24px;
+  }
+  @media (min-width: 720px) {
+    .lead { grid-template-columns: 1.4fr 1fr; align-items: start; }
+  }
+  .lead h2 {
+    font-size: clamp(1.7rem, 4vw, 2.4rem);
+    line-height: 1.2;
+    margin: 6px 0 10px;
+  }
+  .grid {
+    display: grid;
+    gap: 20px;
+    grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
+  }
+  .card {
+    background: var(--card);
+    border: 1px solid var(--rule);
+    padding: 16px;
+  }
+  .card h3 {
+    font-size: 1.15rem;
+    line-height: 1.3;
+    margin: 6px 0 8px;
+  }
+  .kicker {
+    font-family: Arial, Helvetica, sans-serif;
+    font-size: 0.75rem;
+    color: var(--accent);
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    font-weight: bold;
+  }
+  .meta {
+    font-family: Arial, Helvetica, sans-serif;
+    font-size: 0.8rem;
+    color: var(--muted);
+  }
+  .media {
+    width: 100%;
+    aspect-ratio: 16 / 9;
+    background: var(--rule);
+    overflow: hidden;
+    margin-bottom: 10px;
+  }
+  .media:empty { display: none; }
+  .media img, .media iframe {
+    width: 100%;
+    height: 100%;
+    border: 0;
+    display: block;
+    object-fit: cover;
+  }
+  .notice {
+    border: 1px dashed var(--muted);
+    padding: 16px;
+    font-family: Arial, Helvetica, sans-serif;
+    font-size: 0.9rem;
+    color: var(--muted);
+  }
+
+  .ad-slot {
+    margin: 28px 0;
+    border: 1px dashed var(--muted);
+    padding: 28px 16px;
+    text-align: center;
+    font-family: Arial, Helvetica, sans-serif;
+    font-size: 0.85rem;
+    color: var(--muted);
+  }
+  .newsletter {
+    background: var(--card);
+    border: 1px solid var(--rule);
+    padding: 20px;
+    margin-top: 28px;
+  }
+  .newsletter h3 { margin: 0 0 6px; font-size: 1.2rem; }
+  .newsletter form {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    margin-top: 10px;
+    font-family: Arial, Helvetica, sans-serif;
+  }
+  .newsletter input {
+    flex: 1 1 200px;
+    font: inherit;
+    padding: 8px 10px;
+    border: 1px solid var(--rule);
+    background: var(--paper);
+    color: var(--ink);
+  }
+  .newsletter button {
+    font: inherit;
+    font-weight: bold;
+    padding: 8px 16px;
+    background: var(--accent);
+    color: #ffffff;
+    border: none;
+    cursor: pointer;
+  }
+
+  .sidebar h3 {
+    font-family: Arial, Helvetica, sans-serif;
+    font-size: 0.9rem;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    border-bottom: 2px solid var(--accent);
+    padding-bottom: 6px;
+    margin: 0 0 12px;
+  }
+  .sidebar ol { margin: 0; padding-left: 20px; }
+  .sidebar li { margin-bottom: 12px; }
+  .sidebar li a { color: var(--ink); text-decoration: none; }
+  .sidebar li a:hover { color: var(--accent); }
+
+  footer {
+    font-family: Arial, Helvetica, sans-serif;
+    font-size: 0.85rem;
+    color: var(--muted);
+    padding: 24px 16px calc(24px + env(safe-area-inset-bottom, 0px));
+    border-top: 1px solid var(--rule);
+    text-align: center;
+  }
+  .social, .footer-links {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: center;
+    gap: 8px 18px;
+    margin-bottom: 12px;
+  }
+  .social:empty { display: none; }
+  .social a { color: var(--accent); font-weight: bold; text-decoration: none; }
+  .social a:hover { text-decoration: underline; }
+  .footer-links a { color: var(--ink); text-decoration: none; }
+  .footer-links a:hover { color: var(--accent); }
+  .contact { margin-bottom: 12px; line-height: 1.7; }
+
+  .terms {
+    max-width: 780px;
+    margin: 0 auto;
+    padding: 24px 16px 48px;
+  }
+  .terms h2 { font-size: 1.8rem; margin: 8px 0 4px; }
+  .terms h3 { font-size: 1.1rem; margin: 22px 0 6px; }
+  .terms p { margin-bottom: 10px; }
+  .terms a { color: var(--accent); }
+
+  .submit-form label {
+    display: block;
+    font-family: Arial, Helvetica, sans-serif;
+    font-size: 0.85rem;
+    font-weight: bold;
+    margin: 14px 0 4px;
+  }
+  .submit-form input, .submit-form select, .submit-form textarea {
+    width: 100%;
+    font: inherit;
+    padding: 8px 10px;
+    border: 1px solid var(--rule);
+    background: var(--paper);
+    color: var(--ink);
+  }
+  .submit-form textarea { min-height: 160px; }
+  .submit-form button {
+    font: inherit;
+    font-weight: bold;
+    padding: 9px 18px;
+    margin-top: 16px;
+    background: var(--accent);
+    color: #ffffff;
+    border: none;
+    cursor: pointer;
+  }
+  .submit-form .msg {
+    margin-top: 12px;
+    font-family: Arial, Helvetica, sans-serif;
+    font-size: 0.9rem;
+    color: var(--accent);
+  }
+  .submit-form .msg.err { color: var(--breaking); }
+
+  .support-link {
+    background: #ffffff;
+    color: var(--accent) !important;
+    font-weight: bold;
+  }
+  .support-btn {
+    display: inline-block;
+    background: var(--accent);
+    color: #ffffff;
+    font-family: Arial, Helvetica, sans-serif;
+    font-weight: bold;
+    padding: 12px 22px;
+    text-decoration: none;
+    border-radius: 2px;
+  }
+  .support-btn[aria-disabled="true"] { opacity: 0.5; pointer-events: none; }
+</style>
+</head>
+<body>
+
+<div class="ticker" aria-label="Breaking headlines">
+  <span class="breaking">Breaking</span>
+  <div class="ticker-window"><div class="ticker-track" id="ticker"></div></div>
+</div>
+
+<header>
+  <h1 class="masthead">Murfi</h1>
+  <div class="dateline" id="dateline"></div>
+  <div class="tools">
+    <input type="search" id="search" placeholder="Search stories" aria-label="Search stories">
+    <a href="#" title="Add your E-Paper link here">E-Paper</a>
+    <a href="#" id="submitLink">Submit a Story</a>
+  </div>
+</header>
+
+<nav class="categories" id="categoryNav" aria-label="Sections"></nav>
+
+<main>
+  <div class="layout">
+    <div class="content">
+      <div class="notice hidden" id="notice"></div>
+
+      <section class="lead" id="leadStory">
+        <div>
+          <div class="kicker" id="leadCat"></div>
+          <h2 id="leadTitle"></h2>
+          <p id="leadSummary"></p>
+          <div class="meta" id="leadMeta"></div>
+        </div>
+        <div class="media" id="leadMedia"></div>
+      </section>
+
+      <section class="grid" id="storyGrid"></section>
+
+      <div class="ad-slot">Advertisement space. Add your banner image or ad code here.</div>
+
+      <section class="newsletter">
+        <h3>Join our daily newsletter</h3>
+        <p class="meta sans">Get the day's top stories in your inbox.</p>
+        <form id="newsletterForm">
+          <input type="email" placeholder="Your email address" required aria-label="Email address">
+          <button type="submit">Subscribe</button>
+        </form>
+        <p class="meta sans" id="newsletterMsg"></p>
+      </section>
+    </div>
+
+    <aside class="sidebar">
+      <h3>Latest Headlines</h3>
+      <ol id="latest"></ol>
+    </aside>
+  </div>
+</main>
+
+<section class="terms hidden" id="termsPage" aria-labelledby="termsTitle">
+  <p><a href="#" class="page-back">&larr; Back to Murfi</a></p>
+  <h2 id="termsTitle">Terms of Use</h2>
+  <p class="meta sans">Last updated: [add date]</p>
+
+  <h3>1. Acceptance</h3>
+  <p>By using the Murfi website (the "Site"), you agree to these Terms of Use. If you do not agree, please do not use the Site. Murfi is operated by [Company name] ("we", "us").</p>
+
+  <h3>2. Use of the Site</h3>
+  <p>You may read, share links to, and personally use the content on the Site. You agree not to use the Site for unlawful purposes, attempt to gain unauthorized access to our systems, interfere with the Site's operation, or scrape or copy content in bulk without our written permission.</p>
+
+  <h3>3. Content and Copyright</h3>
+  <p>All articles, photographs, videos, graphics, and other material on the Site are owned by us or our licensors and are protected by copyright. You may not reproduce, republish, or redistribute our content without written permission, except for short quotations with a clear link back to the original story.</p>
+
+  <h3>4. Accuracy of Information</h3>
+  <p>We work to report news accurately, but we do not guarantee that all information is complete, current, or error-free. If you believe a story contains an error, please contact us so we can review it.</p>
+
+  <h3>5. Third-Party Links and Media</h3>
+  <p>The Site may link to or embed content from third parties, such as videos and social media posts. We are not responsible for third-party websites or their content, and your use of them is governed by their own terms.</p>
+
+  <h3>6. Advertising</h3>
+  <p>The Site may display advertisements and sponsored content. Sponsored content is labelled as such. We are not responsible for the products or services advertised by third parties.</p>
+
+  <h3>7. Newsletter</h3>
+  <p>If you subscribe to our newsletter, you agree to receive news updates by email. You can unsubscribe at any time using the link in any email we send.</p>
+
+  <h3>8. Disclaimer and Limitation of Liability</h3>
+  <p>The Site is provided "as is" without warranties of any kind. To the fullest extent permitted by law, we are not liable for any loss or damage arising from your use of the Site or reliance on its content.</p>
+
+  <h3>9. Changes to These Terms</h3>
+  <p>We may update these Terms from time to time. The updated version will be posted on this page with a new "last updated" date. Continued use of the Site means you accept the changes.</p>
+
+  <h3>10. Governing Law</h3>
+  <p>These Terms are governed by the laws of [country/state]. Any disputes will be handled in the courts of [location].</p>
+
+  <h3>11. Contact Us</h3>
+  <p>If you have questions about these Terms, contact us at [email address] or [postal address].</p>
+</section>
+
+<section class="terms hidden" id="submitPage" aria-labelledby="submitTitle">
+  <p><a href="#" class="page-back">&larr; Back to Murfi</a></p>
+  <h2 id="submitTitle">Submit a Story</h2>
+  <p>Have a story, tip, or lead for us? Tell us what happened, where, and when. Our editors review every submission before anything is published, and we may contact you for more details.</p>
+  <form id="submitForm" class="submit-form">
+    <label for="subName">Your name (optional)</label>
+    <input id="subName" maxlength="100">
+    <label for="subEmail">Your email (optional, so we can follow up)</label>
+    <input id="subEmail" type="email" maxlength="150">
+    <label for="subTitle">Headline or topic</label>
+    <input id="subTitle" required minlength="5" maxlength="200">
+    <label for="subCategory">Section</label>
+    <select id="subCategory" required></select>
+    <label for="subDetails">Details</label>
+    <textarea id="subDetails" required minlength="20" maxlength="5000"></textarea>
+    <!-- Hidden field to catch spam bots. Real visitors never see or fill it in. -->
+    <input name="website" class="hidden" tabindex="-1" autocomplete="off" aria-hidden="true">
+    <button type="submit">Send story</button>
+    <div class="msg" id="submitMsg"></div>
+  </form>
+</section>
+
+<section class="terms hidden" id="editorialPage" aria-labelledby="editorialTitle">
+  <p><a href="#" class="page-back">&larr; Back to Murfi</a></p>
+  <h2 id="editorialTitle">Editorial Policy and Code of Ethics</h2>
+
+  <h3>Constitutional Rights</h3>
+  <p>The Nigerian Constitution accords all citizens the right to form and express opinion. This assurance allows citizens to generate, adopt, and impart opinions.</p>
+  <p>Section 22 of the Constitution states: "The press, radio, television and other agencies of the mass media will at all times be free to uphold the fundamental objectives contained in this Chapter and uphold the responsibility and accountability of the Government to the people."</p>
+  <p>Against this backdrop, the press has the right to research and propagate information freely to citizens, while being protected in the course of this duty. At Murfi, proprietors, editors, and reporters exercise these rights within the boundary of publishing only factual and accurate information that helps citizens reach an informed and responsible judgment on democratic processes and other public matters.</p>
+
+  <h3>1. Editorial Independence</h3>
+  <p>1.1 Murfi is loyal only to the cause that advances the collective interest of the public, including unity, economic prosperity, and security.</p>
+  <p>1.2 No individual, group, or organisation may use Murfi to pursue an end that undermines or contradicts the collective interest of the public.</p>
+  <p>1.3 Murfi will not be swayed by religious, ethnic, tribal, political, or economic sentiment. We treat all entities equally.</p>
+
+  <h3>2. Reporting the News</h3>
+  <p>2.1 We approach all news fairly, honestly, and factually.</p>
+  <p>2.2 News is adequately contextualised and balanced. Facts will not be embellished, distorted, misinterpreted, misrepresented, exaggerated, or sensationalised.</p>
+  <p>2.3 All sides of a story, especially critical reporting, are given reasonable notice in advance of publication.</p>
+  <p>2.4 Except on rare occasions of strong and overriding public interest, we do not publish information obtained without transparency to the subject of a story.</p>
+  <p>2.5 Unless it is absolutely necessary, we de-emphasise the ethnicity, religion, gender, sexual orientation, political affiliation, race, social or economic status, disability, and similar characteristics of the people in our stories.</p>
+
+  <h3>3. Investigative Journalism</h3>
+  <p>3.1 We devote resources to investigative journalism, which checks injustice, corruption, and abuse of power, and promotes transparency and accountability in society.</p>
+
+  <h3>4. Fact and Opinion</h3>
+  <p>4.1 We clearly distinguish between fact and opinion. A factual article must be able to withstand close scrutiny.</p>
+  <p>4.2 An opinion article contains some factual elements and is not based on pure fabrication.</p>
+  <p>4.3 Satire is labelled as such.</p>
+  <p>4.4 Our news journalists keep their articles free of opinion and bias.</p>
+  <p>4.5 News analysis contains more facts than viewpoints.</p>
+
+  <h3>5. Advocacy</h3>
+  <p>5.1 We take part in matters of public interest, especially against corruption, police and military brutality, terrorism, and sexual and gender-based violence.</p>
+  <p>5.2 All campaigns are based on facts, without distortion or omission.</p>
+  <p>5.3 In editorials, we may weigh in on national issues by analysing public policies and offering alternative ideas in a fair, constructive, and honest manner.</p>
+
+  <h3>6. Sensitivity</h3>
+  <p>6.1 Stories, photos, videos, or illustrations involving suicide, death, nudity, mental illness, or obscenity are handled with care and sensitivity.</p>
+  <p>6.2 Reporters approach comments and enquiries with sympathy and an open mind.</p>
+
+  <h3>7. Children</h3>
+  <p>7.1 We do not normally interview or film children under 18 without the consent of a parent or guardian.</p>
+  <p>7.2 Unless the public interest is clear, children are not interviewed or photographed at schools, parks, or other public facilities without the permission of the people in charge.</p>
+  <p>7.3 We do not publish the names, addresses, or other identifying details of children involved in sexual exploitation, trafficking, or abuse, unless a court orders otherwise or it is needed to seek justice.</p>
+
+  <h3>8. Victims of Rape, Sexual Assault, and Harassment</h3>
+  <p>8.1 We do not publish the identity or image of victims of rape or other sexual or gender-based violence, unless they consent.</p>
+  <p>8.2 Convicted rapists and perpetrators of sexual or gender-based violence receive no such protection from us.</p>
+  <p>8.3 Editorial staff receive regular training on gender issues and gender-sensitive reporting.</p>
+  <p>8.4 We build gender awareness into our story writing and our partnerships.</p>
+
+  <h3>9. Privacy and the Public Interest</h3>
+  <p>9.1 We show care and respect for the privacy of all people, except where a strong public interest requires otherwise.</p>
+  <p>9.2 A story is considered to be in the public interest where it exposes violent crime or corrupt practices, especially in public service.</p>
+  <p>9.3 Issues affecting public health and wellbeing are also in the public interest and can take precedence over the privacy of an individual who poses a threat to them.</p>
+
+  <h3>10. News Gathering and Anonymous Sources</h3>
+  <p>10.1 Our journalists must not gather news through intimidation or duress.</p>
+  <p>10.2 Unless the matter is in the public interest, our journalists do not film people on private property without their knowledge and permission.</p>
+  <p>10.3 Journalists must not harass sources by phone, email, social media, or repeated contact with people who have said they do not want to be interviewed.</p>
+  <p>10.4 We openly identify sources wherever possible, because this strengthens the credibility of a story.</p>
+  <p>10.5 Sometimes the only way to get the facts is from people who cannot be named, for fear of backlash or a wish to stay out of the spotlight. Editors decide these cases individually.</p>
+  <p>10.6 Where an editor agrees to protect a source's anonymity, the journalist must keep that source's identity confidential permanently.</p>
+  <p>10.7 For further fact-finding, an editor may ask a reporter for the identity of an anonymous source. The source is told promptly why this is needed and is assured of confidentiality.</p>
+
+  <h3>11. Freelance Contributors</h3>
+  <p>11.1 Our journalists may not report or supply news material to organisations that compete with Murfi.</p>
+  <p>11.2 If a local or international outlet wants to use one of our journalists, the journalist first discusses it with an editor or supervisor.</p>
+  <p>11.3 We aim for an equitable gender balance when hiring freelance journalists, opinion writers, and digital content creators.</p>
+
+  <h3>12. Bribes and Gifts</h3>
+  <p>12.1 Our journalists must not accept bribes ("brown envelopes") from news sources or organisations to write a story or receive a mention.</p>
+  <p>12.2 Journalists are strongly encouraged to refuse gifts from newsmakers. If refusing a gift would be culturally inappropriate, the journalist must declare it to an editor or senior editorial staff member.</p>
+  <p>12.3 Murfi does not demand or accept payment for news coverage.</p>
+  <p>12.4 Journalists may accept gifts worth up to ₦10,000. Cash gifts are never accepted.</p>
+  <p>12.5 Journalists may take part in lotteries, promotions, or discount programmes open to the general public.</p>
+
+  <h3>13. Errors and Corrections</h3>
+  <p>13.1 We retract any news story, opinion, or advertorial found to be dangerous or false.</p>
+  <p>13.2 Once we admit an error, we publish an explanation or apology in a prominent place on the website.</p>
+  <p>13.3 People who are the subject of erroneous or unfairly harmful articles are given a right of reply, as decided by the editor.</p>
+
+  <h3>14. Social Media</h3>
+  <p>14.1 We encourage our journalists to maintain a social media presence, and to make it prominent if they are comfortable doing so.</p>
+  <p>14.2 Reporters may use social media to share their stories and those of colleagues, engage readers, and build relationships with sources.</p>
+  <p>14.3 Reporters should avoid partisan and combative discussions online.</p>
+  <p>14.4 We encourage journalists to express themselves freely, and trust them to use social media responsibly and in a way that protects Murfi's reputation.</p>
+  <p>14.5 Journalists must not make derogatory remarks or stereotypes about people based on ethnicity, religion, or gender.</p>
+
+  <h3>15. Other Media Organisations</h3>
+  <p>15.1 Murfi does not engage in confrontation with other media organisations.</p>
+  <p>15.2 We credit the original sources of news material and multimedia, and respect intellectual property rights. Staff may not reuse facts or material from another publication unless this is clearly disclosed.</p>
+  <p>15.3 Plagiarism is not excused in any form. It results in strict disciplinary action.</p>
+  <p>15.4 We do not prioritise publishing denials of a story that appeared in a rival publication, unless our reporters have established that the story was false and the outlet refuses to add a correction or retraction.</p>
+
+  <h3>16. Copyright</h3>
+  <p>16.1 Murfi owns all intellectual property rights to content submitted by its journalists or commissioned contributors and published in any format.</p>
+
+  <h3>17. Digital Advertising and Sponsored Content</h3>
+  <p>17.1 Quality journalism costs money. We accept business promotions, banners, and other commercial content to sustain our work.</p>
+  <p>17.2 Commercial material is carefully checked against our editorial standards before publication.</p>
+  <p>17.3 We may publish sponsored content that is not normally newsworthy, if our editors judge it useful to readers and unlikely to cause harm.</p>
+  <p>17.4 Sponsored content is clearly marked. A note appears at the top or bottom of any article or multimedia item that comes from our advertising department, so readers always know what they are seeing.</p>
+
+  <h3>18. Multimedia</h3>
+  <p>18.1 We publish photos and videos taken by our reporters or sourced from social media and elsewhere online. Staff must not manipulate such material in a misleading way.</p>
+  <p>18.2 Only simple enhancements are applied to video or images. Any material altered for clarity is labelled as altered.</p>
+
+  <h3>19. Viewpoints</h3>
+  <p>19.1 We publish opinions, analysis, and features that are as diverse and inclusive as possible. We ask contributors not to submit articles that express discrimination or hostility based on sex, ethnicity, religion, race, sexual orientation, disability, or social or economic status.</p>
+  <p>19.2 Commentaries are the sole responsibility of their authors.</p>
+
+  <h3>20. Administrative Action</h3>
+  <p>The Managing Editor may set up a panel of inquiry into alleged breaches of these editorial guidelines by members of staff.</p>
+</section>
+
+<section class="terms hidden" id="supportPage" aria-labelledby="supportTitle">
+  <p><a href="#" class="page-back">&larr; Back to Murfi</a></p>
+  <h2 id="supportTitle">Support Murfi</h2>
+  <p>Independent journalism depends on readers. Your support helps us report the stories that matter, keep the site free to read, and pay the people who do the work.</p>
+
+  <h3>Ways to Support</h3>
+  <p><strong>One-time gift:</strong> make a single contribution of any amount.</p>
+  <p><strong>Monthly support:</strong> become a regular supporter and help us plan ahead.</p>
+
+  <p style="margin-top:20px">
+    <a class="support-btn" id="supportButton" href="#" target="_blank" rel="noopener noreferrer">Support Murfi</a>
+  </p>
+  <p class="meta sans" id="supportNote"></p>
+
+  <h3>Other Ways to Help</h3>
+  <p>You can also help by sharing our stories, sending us news tips through the Submit a Story page, or subscribing to our newsletter.</p>
+</section>
+
+<section class="terms hidden" id="contactPage" aria-labelledby="contactTitle">
+  <p><a href="#" class="page-back">&larr; Back to Murfi</a></p>
+  <h2 id="contactTitle">Contact Us</h2>
+  <p>We would love to hear from you. Use the details below to reach the right team.</p>
+
+  <h3>Address</h3>
+  <p>[Add your street address]<br>[City, State/Region, Postal code]<br>[Country]</p>
+
+  <h3>Phone</h3>
+  <p>[Add your phone number]</p>
+
+  <h3>Email</h3>
+  <p>General enquiries: <a href="mailto:[general email]">[general email]</a><br>
+  Editorial and news tips: <a href="mailto:[newsroom email]">[newsroom email]</a><br>
+  Advertising: <a href="mailto:[advertising email]">[advertising email]</a></p>
+
+  <h3>Office Hours</h3>
+  <p>[Days and hours, e.g. Monday to Friday, 9:00 to 17:00]</p>
+
+  <h3>Story Tips</h3>
+  <p>Have a story for us? Use the Submit a Story link at the top of the page so our editors can review it.</p>
+</section>
+
+<section class="terms hidden" id="aboutPage" aria-labelledby="aboutTitle">
+  <p><a href="#" class="page-back">&larr; Back to Murfi</a></p>
+  <h2 id="aboutTitle">About Murfi</h2>
+  <p>Murfi is an independent news website that brings readers the stories that matter to them, from politics and business to sport, culture, and everyday life. We aim to report clearly, fairly, and quickly, so that people can make informed decisions.</p>
+
+  <h3>Our Mission</h3>
+  <p>We believe good journalism helps communities understand the world around them. Our mission is to deliver accurate, well-sourced news and thoughtful analysis, and to make it easy to find across every section of the site.</p>
+
+  <h3>Our Values</h3>
+  <p><strong>Accuracy:</strong> we check facts and correct mistakes openly.</p>
+  <p><strong>Independence:</strong> our editorial decisions are our own, and advertising never shapes our reporting.</p>
+  <p><strong>Fairness:</strong> we give people and organizations a chance to respond to what we report.</p>
+
+  <h3>Our Story</h3>
+  <p>Murfi was founded in [year] by [founder names] with a simple goal: to build a news site that is easy to read and trusted by its audience. [Add a short history of the company here.]</p>
+
+  <h3>Contact Us</h3>
+  <p>For news tips, corrections, or general questions, email <a href="mailto:[contact email]">[contact email]</a>.</p>
+</section>
+
+<section class="terms hidden" id="advertisePage" aria-labelledby="advertiseTitle">
+  <p><a href="#" class="page-back">&larr; Back to Murfi</a></p>
+  <h2 id="advertiseTitle">Advertise With Us</h2>
+  <p>Reach an engaged audience of readers who follow the news every day on Murfi. We offer display banners, sponsored articles, newsletter placements, and video features.</p>
+
+  <h3>Advertising Options</h3>
+  <p><strong>Display banners:</strong> placed across the site and on the front page. Sizes and rates are available on request.</p>
+  <p><strong>Sponsored content:</strong> articles written with your brand in mind. Each one is clearly labelled as sponsored.</p>
+  <p><strong>Newsletter:</strong> a message sent to our newsletter subscribers.</p>
+  <p><strong>Video:</strong> embedded video features on our front page and in our video section.</p>
+
+  <h3>Get in Touch</h3>
+  <p>To request our media kit or pricing, email <a href="mailto:[advertising email]">[advertising email]</a> with your company name, the campaign you have in mind, and your preferred start date. We will reply within [number] working days.</p>
+
+  <h3>Advertising Standards</h3>
+  <p>We reserve the right to decline any advertisement that is unlawful, misleading, offensive, or that conflicts with our editorial values. Advertising does not influence our editorial decisions.</p>
+</section>
+
+<section class="terms hidden" id="privacyPage" aria-labelledby="privacyTitle">
+  <p><a href="#" class="page-back">&larr; Back to Murfi</a></p>
+  <h2 id="privacyTitle">Privacy Policy</h2>
+  <p class="meta sans">Last updated: [add date]</p>
+
+  <h3>1. Who We Are</h3>
+  <p>Murfi is operated by [Company name]. This policy explains how we collect, use, and protect your personal information when you visit our website.</p>
+
+  <h3>2. Information We Collect</h3>
+  <p>We may collect information you give us directly, such as your email address when you subscribe to our newsletter or contact us. We may also collect technical information automatically, such as your browser type, device, pages viewed, and approximate location, through cookies and similar technologies.</p>
+
+  <h3>3. How We Use Your Information</h3>
+  <p>We use your information to send newsletters you have asked for, respond to your messages, improve the Site, measure readership, and keep the Site secure. We do not sell your personal information.</p>
+
+  <h3>4. Cookies and Analytics</h3>
+  <p>The Site may use cookies and analytics tools to understand how people use it. You can control cookies through your browser settings. Disabling them may affect how parts of the Site work.</p>
+
+  <h3>5. Third-Party Services</h3>
+  <p>We use trusted service providers to run the Site, including hosting and database services, email delivery, and video or social media embeds. These providers may process your information on our behalf, subject to their own privacy policies. Advertising partners may also use cookies to show you relevant ads.</p>
+
+  <h3>6. How Long We Keep Information</h3>
+  <p>We keep personal information only for as long as needed for the purposes described in this policy, or as required by law. You can ask us to delete your information at any time.</p>
+
+  <h3>7. Your Rights</h3>
+  <p>Depending on where you live, you may have the right to access, correct, delete, or restrict the use of your personal information, and to withdraw consent for newsletters. To use these rights, contact us at [email address]. You can unsubscribe from any email using the link it contains.</p>
+
+  <h3>8. Security</h3>
+  <p>We use reasonable safeguards to protect your information. No method of transmission or storage is completely secure, so we cannot guarantee absolute security.</p>
+
+  <h3>9. Children</h3>
+  <p>The Site is not directed at children under the age of [age], and we do not knowingly collect personal information from them.</p>
+
+  <h3>10. Changes to This Policy</h3>
+  <p>We may update this policy from time to time. The updated version will be posted on this page with a new "last updated" date.</p>
+
+  <h3>11. Contact Us</h3>
+  <p>For privacy questions, contact us at [email address] or [postal address].</p>
+</section>
+
+<footer>
+  <nav class="social" id="socialNav" aria-label="Social media"></nav>
+  <nav class="footer-links" aria-label="Site information">
+    <a href="#" id="supportLink">Support Us</a>
+    <a href="#" id="aboutLink">About Us</a>
+    <a href="#" id="editorialLink">Editorial Policy</a>
+    <a href="https://jamhzcdythympkxgcrht.supabase.co/functions/v1/rss" target="_blank" rel="noopener noreferrer">RSS Feed</a>
+    <a href="#" id="contactLink">Contact Us</a>
+    <a href="#careers">Careers</a>
+    <a href="#" id="advertiseLink">Advertise With Us</a>
+    <a href="#" id="privacyLink">Privacy Policy</a>
+    <a href="#" id="termsLink">Terms of Use</a>
+  </nav>
+  <p>&copy; <span id="year"></span> Murfi.</p>
+</footer>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.min.js"></script>
+<script>
+  // ===== SETTINGS: paste your values from Supabase > Project Settings > API =====
+  const SUPABASE_URL = "https://jamhzcdythympkxgcrht.supabase.co";
+  const SUPABASE_ANON_KEY = "sb_publishable_Ua1s43xuqoIgCQAKO_kf7w_4LJa2Es9";
+  // The anon key is safe to place here. Never put the service_role key in this file.
+
+  // SUPPORT LINK: paste your donation or membership page here, e.g. a Paystack,
+  // Flutterwave, Patreon, or Buy Me a Coffee link. Leave empty until you have one.
+  const SUPPORT_URL = "";
+
+  // Social links are loaded from the social_links table in Supabase.
+  // Editors add them in admin.html. Empty links are hidden.
+
+  const sections = [
+    ["all", "Home"],
+    ["news", "News"],
+    ["politics", "Politics"],
+    ["business", "Business"],
+    ["international", "International"],
+    ["sports", "Sports"],
+    ["entertainment", "Entertainment"],
+    ["opinion", "Opinion"],
+    ["health", "Health"],
+    ["education", "Education"],
+    ["agriculture", "Agriculture"],
+    ["technology", "Technology"],
+    ["science", "Science"],
+    ["culture", "Culture"],
+    ["podcast", "Podcast"],
+    ["videos", "Videos"]
+  ];
+  const catLabels = Object.fromEntries(sections.slice(1));
+
+  let stories = [];
+  let currentCat = "all";
+
+  function timeAgo(iso) {
+    const hours = Math.round((Date.now() - new Date(iso).getTime()) / 3600000);
+    if (hours < 1) return "Just now";
+    if (hours < 24) return hours + (hours === 1 ? " hour ago" : " hours ago");
+    const days = Math.round(hours / 24);
+    return days + (days === 1 ? " day ago" : " days ago");
+  }
+
+  async function loadStories() {
+    if (SUPABASE_URL.includes("YOUR-PROJECT")) {
+      showNotice("Murfi is not connected to Supabase yet. Add your project URL and anon key at the top of this file.");
+      return [];
+    }
+    try {
+      const db = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+      const { data, error } = await db
+        .from("stories")
+        .select("*")
+        .eq("published", true)
+        .order("published_at", { ascending: false });
+      if (error) throw error;
+      return data.map(s => ({
+        id: s.id,
+        cat: s.category,
+        lead: s.lead,
+        title: s.title,
+        summary: s.summary || "",
+        author: s.author || "Murfi Staff",
+        time: timeAgo(s.published_at),
+        image: s.image_url,
+        video: s.video_url
+      }));
+    } catch (err) {
+      console.error(err);
+      showNotice("Stories could not be loaded right now. Please try again later.");
+      return [];
+    }
+  }
+
+  function showNotice(text) {
+    const n = document.getElementById("notice");
+    n.textContent = text;
+    n.classList.remove("hidden");
+  }
+
+  // Ticker
+  function renderTicker() {
+    const track = document.getElementById("ticker");
+    track.innerHTML = "";
+    const headlines = stories.map(s => s.title);
+    [...headlines, ...headlines].forEach(text => {
+      const span = document.createElement("span");
+      span.textContent = text;
+      track.appendChild(span);
+    });
+  }
+
+  // Category navigation
+  const navEl = document.getElementById("categoryNav");
+  sections.forEach(([key, label]) => {
+    const btn = document.createElement("button");
+    btn.textContent = label;
+    btn.dataset.cat = key;
+    if (key === "all") btn.classList.add("active");
+    btn.addEventListener("click", () => {
+      currentCat = key;
+      navEl.querySelectorAll("button").forEach(b => b.classList.toggle("active", b === btn));
+      renderGrid();
+    });
+    navEl.appendChild(btn);
+  });
+
+  function renderMedia(el, story) {
+    el.innerHTML = "";
+    if (story.video) {
+      const frame = document.createElement("iframe");
+      frame.src = story.video;
+      frame.title = "Video";
+      frame.allow = "accelerometer; autoplay; encrypted-media; picture-in-picture";
+      frame.allowFullscreen = true;
+      el.appendChild(frame);
+    } else if (story.image) {
+      const img = document.createElement("img");
+      img.src = story.image;
+      img.alt = "";
+      img.loading = "lazy";
+      el.appendChild(img);
+    }
+  }
+
+  function renderLead(story) {
+    document.getElementById("leadCat").textContent = catLabels[story.cat] || "";
+    document.getElementById("leadTitle").textContent = story.title;
+    document.getElementById("leadSummary").textContent = story.summary;
+    document.getElementById("leadMeta").textContent = "By " + story.author + " \u2022 " + story.time;
+    renderMedia(document.getElementById("leadMedia"), story);
+  }
+
+  function renderGrid() {
+    const q = document.getElementById("search").value.trim().toLowerCase();
+    const grid = document.getElementById("storyGrid");
+    const leadEl = document.getElementById("leadStory");
+    grid.innerHTML = "";
+
+    const lead = stories.find(s => s.lead) || null;
+    const matches = s => (currentCat === "all" || s.cat === currentCat) &&
+      (!q || (s.title + " " + s.summary).toLowerCase().includes(q));
+
+    const showLead = !!lead && currentCat === "all" && !q;
+    leadEl.classList.toggle("hidden", !showLead);
+    if (showLead) renderLead(lead);
+
+    const list = stories.filter(s => !(showLead && s === lead) && matches(s));
+    list.forEach(s => {
+      const card = document.createElement("article");
+      card.className = "card";
+      card.innerHTML = '<div class="media"></div><div class="kicker"></div><h3></h3><p></p><div class="meta"></div>';
+      renderMedia(card.querySelector(".media"), s);
+      card.querySelector(".kicker").textContent = catLabels[s.cat] || "";
+      card.querySelector("h3").textContent = s.title;
+      card.querySelector("p").textContent = s.summary;
+      card.querySelector(".meta").textContent = "By " + s.author + " \u2022 " + s.time;
+      grid.appendChild(card);
+    });
+
+    if (!showLead && list.length === 0) {
+      grid.innerHTML = '<p class="meta">No stories to show here yet.</p>';
+    }
+  }
+
+  document.getElementById("search").addEventListener("input", renderGrid);
+
+  function renderLatest() {
+    const ol = document.getElementById("latest");
+    ol.innerHTML = "";
+    stories.slice(0, 8).forEach(s => {
+      const li = document.createElement("li");
+      const a = document.createElement("a");
+      a.href = "#";
+      a.textContent = s.title;
+      li.appendChild(a);
+      const meta = document.createElement("div");
+      meta.className = "meta";
+      meta.textContent = s.time;
+      li.appendChild(meta);
+      ol.appendChild(li);
+    });
+  }
+
+  // Newsletter (front-end only; connect to your email service later)
+  document.getElementById("newsletterForm").addEventListener("submit", e => {
+    e.preventDefault();
+    document.getElementById("newsletterMsg").textContent = "Thank you for subscribing!";
+    e.target.reset();
+  });
+
+  async function loadSocial() {
+    if (SUPABASE_URL.includes("YOUR-PROJECT")) return;
+    try {
+      const db = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+      const { data, error } = await db.from("social_links").select("*");
+      if (error) throw error;
+      const nav = document.getElementById("socialNav");
+      nav.innerHTML = "";
+      data.filter(s => s.url).forEach(s => {
+        const a = document.createElement("a");
+        a.href = s.url;
+        a.target = "_blank";
+        a.rel = "noopener noreferrer";
+        a.textContent = s.platform;
+        nav.appendChild(a);
+      });
+    } catch (err) {
+      console.error(err);
+    }
+  }
+
+  document.getElementById("dateline").textContent =
+    new Date().toLocaleDateString("en-US", { weekday: "long", year: "numeric", month: "long", day: "numeric" });
+  document.getElementById("year").textContent = new Date().getFullYear();
+
+  // Footer pages (Terms, Advertise, Privacy): shown in place of the news page
+  function showPage(pageId) {
+    document.querySelectorAll(".terms").forEach(p => p.classList.add("hidden"));
+    document.querySelector("main").classList.toggle("hidden", !!pageId);
+    if (pageId) document.getElementById(pageId).classList.remove("hidden");
+    window.scrollTo(0, 0);
+  }
+  [["supportLink", "supportPage"], ["submitLink", "submitPage"], ["contactLink", "contactPage"], ["aboutLink", "aboutPage"], ["editorialLink", "editorialPage"], ["termsLink", "termsPage"], ["advertiseLink", "advertisePage"], ["privacyLink", "privacyPage"]]
+    .forEach(([linkId, pageId]) => {
+      document.getElementById(linkId).addEventListener("click", e => {
+        e.preventDefault();
+        showPage(pageId);
+      });
+    });
+  document.querySelectorAll(".page-back").forEach(link => {
+    link.addEventListener("click", e => {
+      e.preventDefault();
+      showPage(null);
+    });
+  });
+
+  // Support button: uses SUPPORT_URL from the settings at the top
+  (function setupSupport() {
+    const btn = document.getElementById("supportButton");
+    const note = document.getElementById("supportNote");
+    if (SUPPORT_URL) {
+      btn.href = SUPPORT_URL;
+    } else {
+      btn.setAttribute("aria-disabled", "true");
+      btn.removeAttribute("target");
+      note.textContent = "Online giving is coming soon. Thank you for your interest.";
+    }
+  })();
+
+  // Story submissions: visitors send stories, editors review them in admin.html
+  (function setupSubmitForm() {
+    const select = document.getElementById("subCategory");
+    sections.slice(1).forEach(([key, label]) => {
+      const opt = document.createElement("option");
+      opt.value = key;
+      opt.textContent = label;
+      select.appendChild(opt);
+    });
+
+    document.getElementById("submitForm").addEventListener("submit", async e => {
+      e.preventDefault();
+      const form = e.target;
+      const msg = document.getElementById("submitMsg");
+      msg.classList.remove("err");
+
+      // Spam check: if the hidden field was filled in, pretend it worked
+      if (form.elements.website.value) {
+        form.reset();
+        msg.textContent = "Thank you! Our editors will review your story.";
+        return;
+      }
+
+      if (SUPABASE_URL.includes("YOUR-PROJECT")) {
+        msg.classList.add("err");
+        msg.textContent = "Story submissions are not connected yet.";
+        return;
+      }
+
+      const db = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+      const { error } = await db.from("story_submissions").insert({
+        name: document.getElementById("subName").value.trim() || null,
+        email: document.getElementById("subEmail").value.trim() || null,
+        title: document.getElementById("subTitle").value.trim(),
+        details: document.getElementById("subDetails").value.trim(),
+        category: select.value,
+        status: "new"
+      });
+
+      if (error) {
+        msg.classList.add("err");
+        msg.textContent = "Sorry, your story could not be sent. Please try again.";
+        return;
+      }
+      form.reset();
+      msg.textContent = "Thank you! Our editors will review your story.";
+    });
+  })();
+
+  (async function init() {
+    stories = await loadStories();
+    renderTicker();
+    renderLatest();
+    renderGrid();
+    loadSocial();
+  })();
+</script>
+</body>
+</html>
